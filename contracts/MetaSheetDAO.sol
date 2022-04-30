@@ -16,6 +16,7 @@ contract MetaSheetDAO {
             address(this),
             (1000000000 * 10**18)
         );
-        daoEngine = new DAOEngine(token);
+        nft = new NFT("The Meta Sheet NFT", "TMSN", "https://themetasheet.io");
+        daoEngine = new DAOEngine(token, nft);
     }
 }
