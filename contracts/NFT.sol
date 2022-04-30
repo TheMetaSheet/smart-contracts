@@ -21,11 +21,9 @@ contract NFT is ERC721Enumerable, Ownable {
     constructor(
         string memory _name,
         string memory _symbol,
-        string memory _initBaseURI,
-        string memory _initNotRevealedUri
+        string memory _initBaseURI
     ) ERC721(_name, _symbol) {
         setBaseURI(_initBaseURI);
-        setNotRevealedURI(_initNotRevealedUri);
     }
 
     function _baseURI() internal view virtual override returns (string memory) {
@@ -100,10 +98,6 @@ contract NFT is ERC721Enumerable, Ownable {
 
     function setmaxMintAmount(uint256 _newmaxMintAmount) public onlyOwner {
         maxMintAmount = _newmaxMintAmount;
-    }
-
-    function setNotRevealedURI(string memory _notRevealedURI) public onlyOwner {
-        notRevealedUri = _notRevealedURI;
     }
 
     function setBaseURI(string memory _newBaseURI) public onlyOwner {
