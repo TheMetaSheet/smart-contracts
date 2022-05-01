@@ -1,9 +1,13 @@
 import { ethers } from "hardhat";
-import { expect } from "chai";
+import chaiAsPromised from "chai-as-promised";
+import chai from "chai";
 import { BigNumber as BigNumberJs } from "bignumber.js";
 // eslint-disable-next-line node/no-missing-import
 import { MetaSheetDAO, NFT, Token } from "../typechain";
 require("@nomiclabs/hardhat-waffle");
+
+chai.use(chaiAsPromised);
+const { expect } = chai;
 
 let metaSheetDAOInstant: MetaSheetDAO = undefined as any;
 let tokenInstant: Token = undefined as any;
@@ -45,10 +49,15 @@ describe("MetaSheetDAO", function () {
     expect(metaSheetDAOInstant).not.equals(undefined);
   });
 
-  it("set Token address", async function () {
+  it("should set Token address", async function () {
     await metaSheetDAOInstant.setToken(tokenInstant.address);
     expect(await metaSheetDAOInstant.getTokenAddress()).equals(
       tokenInstant.address
     );
+  });
+
+  it("should fail to set Token address again", async function () {
+    return expect(metaSheetDAOInstant.setToken(tokenInstant.address)).to
+      .eventually.rejected;
   });
 });
