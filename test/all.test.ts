@@ -60,4 +60,16 @@ describe("MetaSheetDAO", function () {
     return expect(metaSheetDAOInstant.setToken(tokenInstant.address)).to
       .eventually.rejected;
   });
+
+  it("should set NFT address", async function () {
+    await metaSheetDAOInstant.setNFT(nftInstant.address);
+    expect(await metaSheetDAOInstant.getNFTAddress()).equals(
+      nftInstant.address
+    );
+  });
+
+  it("should fail to set NFT address again", async function () {
+    return expect(metaSheetDAOInstant.setNFT(nftInstant.address)).to.eventually
+      .rejected;
+  });
 });
