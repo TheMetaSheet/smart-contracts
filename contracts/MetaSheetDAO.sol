@@ -2,7 +2,6 @@ pragma solidity ^0.8.0;
 
 import "./interfaces/TokenInterface.sol";
 import "./interfaces/NFTInterface.sol";
-
 import "./DAOEngine.sol";
 
 contract MetaSheetDAO {
@@ -11,11 +10,14 @@ contract MetaSheetDAO {
     DAOEngine public daoEngine;
 
     function setToken(address tokenAddress) public {
+        require(tokenAddress != address(0), "invalid address");
         require(address(token) == address(0), "Token is already set");
         token = TokenInterface(tokenAddress);
     }
 
     function setNFT(address nftAddress) public {
+        require(nftAddress != address(0), "invalid address");
+        require(address(nft) == address(0), "NFt is already set");
         nft = NFTInterface(nftAddress);
     }
 
