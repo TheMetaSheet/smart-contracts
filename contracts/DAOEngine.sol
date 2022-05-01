@@ -1,13 +1,13 @@
 pragma solidity ^0.8.0;
 
-import "./Token.sol";
-import "./NFT.sol";
+import "./interfaces/TokenInterface.sol";
+import "./interfaces/NFTInterface.sol";
 
 contract DAOEngine {
-    Token public token;
-    NFT public nft;
+    TokenInterface public token;
+    NFTInterface public nft;
 
-    constructor(Token _token, NFT _nft) {
+    constructor(TokenInterface _token, NFTInterface _nft) {
         token = _token;
         nft = _nft;
     }

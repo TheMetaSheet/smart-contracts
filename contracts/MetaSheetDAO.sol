@@ -1,22 +1,37 @@
 pragma solidity ^0.8.0;
 
-import "./Token.sol";
-import "./NFT.sol";
+import "./interfaces/TokenInterface.sol";
+import "./interfaces/NFTInterface.sol";
+
 import "./DAOEngine.sol";
 
 contract MetaSheetDAO {
-    Token public token;
-    NFT public nft;
+    TokenInterface public token;
+    NFTInterface public nft;
     DAOEngine public daoEngine;
 
-    constructor() {
-        token = new Token(
-            "The Meta Sheet Token",
-            "TMST",
-            address(this),
-            (1000000000 * 10**18)
-        );
-        nft = new NFT("The Meta Sheet NFT", "TMSN", "https://themetasheet.io");
+    function setToken(address tokenAddress) public {
+        require(address(token) == address(0), "Token is already set");
+        token = TokenInterface(tokenAddress);
+    }
+
+    function setNFT(address nftAddress) public {
+        nft = NFTInterface(nftAddress);
+    }
+
+    function createDAOEngine() public {
         daoEngine = new DAOEngine(token, nft);
+    }
+
+    function getNFTAddress() public view returns (address) {
+        return address(nft);
+    }
+
+    function getTokenAddress() public view returns (address) {
+        return address(token);
+    }
+
+    function getDAOEngineAddress() public view returns (address) {
+        return address(daoEngine);
     }
 }
