@@ -2,12 +2,12 @@ pragma solidity ^0.8.0;
 
 import "./interfaces/TokenInterface.sol";
 import "./interfaces/NFTInterface.sol";
-import "./DAOEngine.sol";
+import "./interfaces/DAOEngine.sol";
 
 contract MetaSheetDAO {
     TokenInterface public token;
     NFTInterface public nft;
-    DAOEngine public daoEngine;
+    DAOEngineInterface[] public daoEngines;
 
     function setToken(address tokenAddress) public {
         require(tokenAddress != address(0), "invalid address");
@@ -21,8 +21,20 @@ contract MetaSheetDAO {
         nft = NFTInterface(nftAddress);
     }
 
-    function createDAOEngine() public {
-        daoEngine = new DAOEngine(token, nft);
+    function setDAOEngine(address _daoEngineAddress) public {
+        require(_daoEngineAddress != address(0), "invalid address");
+        for (uint256 index = 0; index < daoEngines.length; index++) {
+            require(
+                address(daoEngines[index]) != _daoEngineAddress,
+                "Can not set used daoEngine"
+            );
+        }
+        if (daoEngines.length != 0) {
+            daoEngines[daoEngines.length - 1].lock();
+        }
+        DAOEngineInterface daoEngine = DAOEngineInterface(_daoEngineAddress);
+        daoEngine.acquire(address(this));
+        daoEngines.push(daoEngine);
     }
 
     function getNFTAddress() public view returns (address) {
@@ -34,6 +46,6 @@ contract MetaSheetDAO {
     }
 
     function getDAOEngineAddress() public view returns (address) {
-        return address(daoEngine);
+        return address(daoEngines[daoEngines.length - 1]);
     }
 }
