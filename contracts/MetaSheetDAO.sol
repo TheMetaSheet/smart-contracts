@@ -10,23 +10,34 @@ contract MetaSheetDAO is Ownable {
     NFTInterface public nft;
     DAOEngineInterface[] public daoEngines;
 
-    uint256 public numOfDAOEngineProposal;
+    uint256 public numOfDAOEngineProposal = 1;
     struct DAOEngineProposal {
         string description;
         address daoEngineAddress;
         uint256 livePeriod;
         uint256 proposalId;
         bool executed;
+        mapping(address => bool) votes;
     }
-    mapping(uint256 => DAOEngineProposal) private daoEngineProposal;
-    
+    mapping(uint256 => DAOEngineProposal) private daoEngineProposals;
+
     modifier onlyStakeholder(string memory message) {
         require(token.balanceOf(msg.sender) > 0, message);
         _;
     }
 
+    function vote(uint256 proposalId, bool supportProposal)
+        external
+        onlyStakeholder("Only stakeholders are allowed to vote")
+    {
+        DAOEngineProposal storage daoEngineProposal = daoEngineProposals[
+            proposalId
+        ];
+        daoEngineProposal.votes[msg.sender] = supportProposal;
+    }
+
     modifier onlyValidDAOEngineProposal(uint256 proposalId) {
-        DAOEngineProposal storage proposal = daoEngineProposal[proposalId];
+        DAOEngineProposal storage proposal = daoEngineProposals[proposalId];
         require(proposal.proposalId == proposalId, "invalid proposal id");
         require(proposal.executed == false, "proposal is already executed");
         require(
@@ -43,12 +54,15 @@ contract MetaSheetDAO is Ownable {
         external
         onlyStakeholder("Only stakeholders are allowed to create proposals")
     {
-        uint256 proposalId = numOfDAOEngineProposal++;
-        DAOEngineProposal storage proposal = daoEngineProposal[proposalId];
+        DAOEngineProposal storage proposal = daoEngineProposals[
+            numOfDAOEngineProposal
+        ];
         proposal.description = _description;
         proposal.daoEngineAddress = _daoEngineAddress;
         proposal.executed = false;
         proposal.livePeriod = block.timestamp + 1 weeks;
+        proposal.proposalId = numOfDAOEngineProposal;
+        numOfDAOEngineProposal++;
     }
 
     function setToken(address tokenAddress) public onlyOwner {
@@ -67,7 +81,7 @@ contract MetaSheetDAO is Ownable {
         public
         onlyValidDAOEngineProposal(proposalId)
     {
-        DAOEngineProposal storage proposal = daoEngineProposal[proposalId];
+        DAOEngineProposal storage proposal = daoEngineProposals[proposalId];
         require(proposal.daoEngineAddress != address(0), "invalid address");
         for (uint256 index = 0; index < daoEngines.length; index++) {
             require(

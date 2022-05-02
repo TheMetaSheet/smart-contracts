@@ -121,22 +121,32 @@ describe("Setup MetaSheetDAO", function () {
       .rejected;
   });
 
-  it("should acquire DAOEngine", async function () {
-    await metaSheetDAOInstant.setDAOEngine(daoEngineInstant.address);
+  it("should acquire DAOEngine via proposal", async function () {
+    const proposalId = await metaSheetDAOInstant.numOfDAOEngineProposal();
+    await metaSheetDAOInstant.createProposal(
+      "first daoEngine Setup proposal",
+      daoEngineInstant.address
+    );
+    await metaSheetDAOInstant.vote(proposalId, true);
+    await metaSheetDAOInstant.setDAOEngine(proposalId);
   });
 
-  it("should failed to acquire same DAOEngine", async function () {
-    return expect(metaSheetDAOInstant.setDAOEngine(daoEngineInstant.address)).to
-      .eventually.rejected;
+  it("should failed to acquire DAOEngine via same proposal", async function () {
+    const proposalId =
+      (await metaSheetDAOInstant.numOfDAOEngineProposal()).toNumber() - 1;
+    return expect(metaSheetDAOInstant.setDAOEngine(proposalId)).to.eventually
+      .rejected;
   });
 
-  it("should failed acquire fresh DAOEngine 2 without ownership", async function () {
-    return expect(metaSheetDAOInstant.setDAOEngine(daoEngineTwoInstant.address))
-      .to.eventually.rejected;
+  it("validate acquired DAOEngine address", async function () {
+    return expect(
+      metaSheetDAOInstant.getDAOEngineAddress()
+    ).to.eventually.become(daoEngineInstant.address);
   });
 
-  it("transfer ownership & should acquire DAOEngine 2", async function () {
-    await daoEngineTwoInstant.transferOwnership(metaSheetDAOInstant.address);
-    await metaSheetDAOInstant.setDAOEngine(daoEngineTwoInstant.address);
+  it("should failed to validate acquired DAOEngine address with DAOEngineTwo", async function () {
+    return expect(
+      metaSheetDAOInstant.getDAOEngineAddress()
+    ).to.eventually.not.become(daoEngineTwoInstant.address);
   });
 });
