@@ -3,101 +3,69 @@ pragma solidity ^0.8.0;
 import "./interfaces/TokenInterface.sol";
 import "./interfaces/NFTInterface.sol";
 import "./interfaces/DAOEngine.sol";
+import "./interfaces/Governance.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
+import "hardhat/console.sol";
 
 contract MetaSheetDAO is Ownable {
     TokenInterface public token;
     NFTInterface public nft;
+    GovernanceInterface public governance;
     DAOEngineInterface[] public daoEngines;
 
-    uint256 public numOfDAOEngineProposal = 1;
-    struct DAOEngineProposal {
-        string description;
-        address daoEngineAddress;
-        uint256 livePeriod;
-        uint256 proposalId;
-        bool executed;
-        mapping(address => bool) votes;
+    constructor(
+        address tokenAddress,
+        address nftAddress,
+        address governanceAddress
+    ) {
+        require(tokenAddress != address(0), "invalid Token address");
+        require(nftAddress != address(0), "invalid NFT address");
+        require(nftAddress != address(0), "invalid Governance address");
+        token = TokenInterface(tokenAddress);
+        nft = NFTInterface(nftAddress);
+        governance = GovernanceInterface(governanceAddress);
     }
-    mapping(uint256 => DAOEngineProposal) private daoEngineProposals;
 
     modifier onlyStakeholder(string memory message) {
         require(token.balanceOf(msg.sender) > 0, message);
         _;
     }
 
+    function createDAOEngineProposal(
+        string calldata _description,
+        address daoEngineAddress
+    )
+        public
+        onlyStakeholder("Only stakeholders are allowed to create Proposal")
+    {
+        governance.createProposal(_description, abi.encode(daoEngineAddress));
+    }
+
     function vote(uint256 proposalId, bool supportProposal)
-        external
+        public
         onlyStakeholder("Only stakeholders are allowed to vote")
     {
-        DAOEngineProposal storage daoEngineProposal = daoEngineProposals[
-            proposalId
-        ];
-        daoEngineProposal.votes[msg.sender] = supportProposal;
+        governance.vote(proposalId, supportProposal);
     }
 
-    modifier onlyValidDAOEngineProposal(uint256 proposalId) {
-        DAOEngineProposal storage proposal = daoEngineProposals[proposalId];
-        require(proposal.proposalId == proposalId, "invalid proposal id");
-        require(proposal.executed == false, "proposal is already executed");
-        require(
-            proposal.livePeriod < block.timestamp,
-            "there still have time before executed"
-        );
-        _;
-    }
-
-    function createProposal(
-        string calldata _description,
-        address _daoEngineAddress
-    )
-        external
-        onlyStakeholder("Only stakeholders are allowed to create proposals")
-    {
-        DAOEngineProposal storage proposal = daoEngineProposals[
-            numOfDAOEngineProposal
-        ];
-        proposal.description = _description;
-        proposal.daoEngineAddress = _daoEngineAddress;
-        proposal.executed = false;
-        proposal.livePeriod = block.timestamp + 1 weeks;
-        proposal.proposalId = numOfDAOEngineProposal;
-        numOfDAOEngineProposal++;
-    }
-
-    function setToken(address tokenAddress) public onlyOwner {
-        require(tokenAddress != address(0), "invalid address");
-        require(address(token) == address(0), "Token is already set");
-        token = TokenInterface(tokenAddress);
-    }
-
-    function setNFT(address nftAddress) public onlyOwner {
-        require(nftAddress != address(0), "invalid address");
-        require(address(nft) == address(0), "NFt is already set");
-        nft = NFTInterface(nftAddress);
-    }
-
-    function setDAOEngine(uint256 proposalId)
-        public
-        onlyValidDAOEngineProposal(proposalId)
-    {
-        DAOEngineProposal storage proposal = daoEngineProposals[proposalId];
-        require(proposal.daoEngineAddress != address(0), "invalid address");
+    function setDAOEngine(uint256 proposalId) public {
+        bytes memory params = governance.getProposalParams(proposalId);
+        address daoEngineAddress = abi.decode(params, (address));
+        require(daoEngineAddress != address(0), "invalid address");
         for (uint256 index = 0; index < daoEngines.length; index++) {
             require(
-                address(daoEngines[index]) != proposal.daoEngineAddress,
+                address(daoEngines[index]) != daoEngineAddress,
                 "Can not set used daoEngine"
             );
         }
         if (daoEngines.length != 0) {
             daoEngines[daoEngines.length - 1].lock();
         }
-        DAOEngineInterface daoEngine = DAOEngineInterface(
-            proposal.daoEngineAddress
-        );
+        DAOEngineInterface daoEngine = DAOEngineInterface(daoEngineAddress);
         daoEngine.acquire(address(this));
         daoEngines.push(daoEngine);
-        proposal.executed = true;
+        governance.setProposalExecuted(proposalId);
     }
 
     function getNFTAddress() public view returns (address) {
