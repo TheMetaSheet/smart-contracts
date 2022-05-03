@@ -3,7 +3,7 @@ import chaiAsPromised from "chai-as-promised";
 import chai from "chai";
 import { BigNumber as BigNumberJs } from "bignumber.js";
 // eslint-disable-next-line node/no-missing-import
-import { DAOEngine, MetaSheetDAO, NFT, Token } from "../typechain";
+import { DAOEngine, Governance, MetaSheetDAO, NFT, Token } from "../typechain";
 require("@nomiclabs/hardhat-waffle");
 
 chai.use(chaiAsPromised);
@@ -12,6 +12,8 @@ const { expect } = chai;
 let metaSheetDAOInstant: MetaSheetDAO = undefined as any;
 let tokenInstant: Token = undefined as any;
 let nftInstant: NFT = undefined as any;
+let governanceInstant: Governance = undefined as any;
+let governanceTestInstant: Governance = undefined as any;
 let daoEngineInstant: DAOEngine = undefined as any;
 let daoEngineTwoInstant: DAOEngine = undefined as any;
 
@@ -40,6 +42,37 @@ describe("Deploy NFT", function () {
     );
     nftInstant = await nft.deployed();
     expect(nftInstant).not.equals(undefined);
+  });
+});
+
+describe("Deploy Governance", function () {
+  it("should deploy Governance", async function () {
+    const Governance = await ethers.getContractFactory("Governance");
+    const governance = await Governance.deploy(tokenInstant.address);
+    governanceInstant = await governance.deployed();
+    expect(governanceInstant).not.equals(undefined);
+  });
+});
+
+describe("Governance tests", function () {
+  it("should deploy Governance", async function () {
+    const Governance = await ethers.getContractFactory("Governance");
+    const governance = await Governance.deploy(tokenInstant.address);
+    governanceTestInstant = await governance.deployed();
+    expect(governanceTestInstant).not.equals(undefined);
+  });
+
+  it("should create proposal", async function () {
+    await governanceTestInstant.createProposal("ok", [0, 0, 0]);
+  });
+
+  it("should fail to set proposal executed at #0", async function () {
+    return expect(governanceTestInstant.setProposalExecuted(0)).to.eventually
+      .rejected;
+  });
+
+  it("should set proposal executed #1", async function () {
+    await governanceTestInstant.setProposalExecuted(1);
   });
 });
 
@@ -84,7 +117,11 @@ describe("DAOEngine: test", function () {
 describe("Deploy MetaSheetDAO", function () {
   it("should deploy MetaSheetDAO", async function () {
     const MetaSheetDAO = await ethers.getContractFactory("MetaSheetDAO");
-    const metaSheetDAO = await MetaSheetDAO.deploy();
+    const metaSheetDAO = await MetaSheetDAO.deploy(
+      tokenInstant.address,
+      nftInstant.address,
+      governanceInstant.address
+    );
     metaSheetDAOInstant = await metaSheetDAO.deployed();
     expect(metaSheetDAOInstant).not.equals(undefined);
   });
@@ -95,35 +132,12 @@ describe("Setup MetaSheetDAO", function () {
     await tokenInstant.transferOwnership(metaSheetDAOInstant.address);
     await nftInstant.transferOwnership(metaSheetDAOInstant.address);
     await daoEngineInstant.transferOwnership(metaSheetDAOInstant.address);
-  });
-
-  it("should set Token address", async function () {
-    await metaSheetDAOInstant.setToken(tokenInstant.address);
-    expect(await metaSheetDAOInstant.getTokenAddress()).equals(
-      tokenInstant.address
-    );
-  });
-
-  it("should fail to set Token address again", async function () {
-    return expect(metaSheetDAOInstant.setToken(tokenInstant.address)).to
-      .eventually.rejected;
-  });
-
-  it("should set NFT address", async function () {
-    await metaSheetDAOInstant.setNFT(nftInstant.address);
-    expect(await metaSheetDAOInstant.getNFTAddress()).equals(
-      nftInstant.address
-    );
-  });
-
-  it("should fail to set NFT address again", async function () {
-    return expect(metaSheetDAOInstant.setNFT(nftInstant.address)).to.eventually
-      .rejected;
+    await governanceInstant.transferOwnership(metaSheetDAOInstant.address);
   });
 
   it("should acquire DAOEngine via proposal", async function () {
-    const proposalId = await metaSheetDAOInstant.numOfDAOEngineProposal();
-    await metaSheetDAOInstant.createProposal(
+    const proposalId = await governanceInstant.proposalCount();
+    await metaSheetDAOInstant.createDAOEngineProposal(
       "first daoEngine Setup proposal",
       daoEngineInstant.address
     );
@@ -132,8 +146,7 @@ describe("Setup MetaSheetDAO", function () {
   });
 
   it("should failed to acquire DAOEngine via same proposal", async function () {
-    const proposalId =
-      (await metaSheetDAOInstant.numOfDAOEngineProposal()).toNumber() - 1;
+    const proposalId = (await governanceInstant.proposalCount()).toNumber() - 1;
     return expect(metaSheetDAOInstant.setDAOEngine(proposalId)).to.eventually
       .rejected;
   });
