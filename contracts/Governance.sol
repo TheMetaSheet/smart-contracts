@@ -6,7 +6,6 @@ import "./interfaces/MetaSheetDAO.sol";
 import "./interfaces/DAOEngine.sol";
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "hardhat/console.sol";
 
 contract Governance is Ownable {
     TokenInterface public token;
