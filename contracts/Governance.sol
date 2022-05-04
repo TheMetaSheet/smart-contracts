@@ -2,7 +2,7 @@ pragma solidity ^0.8.0;
 
 import "./interfaces/TokenInterface.sol";
 import "./interfaces/NFTInterface.sol";
-import "./interfaces/MetaSheetDAO.sol";
+import "./interfaces/TheMetaSheet.sol";
 import "./interfaces/DAOEngine.sol";
 
 import "@openzeppelin/contracts/access/Ownable.sol";

@@ -3,13 +3,13 @@ import chaiAsPromised from "chai-as-promised";
 import chai from "chai";
 import { BigNumber as BigNumberJs } from "bignumber.js";
 // eslint-disable-next-line node/no-missing-import
-import { DAOEngine, Governance, MetaSheetDAO, NFT, Token } from "../typechain";
+import { DAOEngine, Governance, TheMetaSheet, NFT, Token } from "../typechain";
 require("@nomiclabs/hardhat-waffle");
 
 chai.use(chaiAsPromised);
 const { expect } = chai;
 
-let metaSheetDAOInstant: MetaSheetDAO = undefined as any;
+let theMetaSheetInstant: TheMetaSheet = undefined as any;
 let tokenInstant: Token = undefined as any;
 let nftInstant: NFT = undefined as any;
 let governanceInstant: Governance = undefined as any;
@@ -114,52 +114,52 @@ describe("DAOEngine: test", function () {
   });
 });
 
-describe("Deploy MetaSheetDAO", function () {
-  it("should deploy MetaSheetDAO", async function () {
-    const MetaSheetDAO = await ethers.getContractFactory("MetaSheetDAO");
-    const metaSheetDAO = await MetaSheetDAO.deploy(
+describe("Deploy TheMetaSheet", function () {
+  it("should deploy TheMetaSheet", async function () {
+    const TheMetaSheet = await ethers.getContractFactory("TheMetaSheet");
+    const theMetaSheet = await TheMetaSheet.deploy(
       tokenInstant.address,
       nftInstant.address,
       governanceInstant.address
     );
-    metaSheetDAOInstant = await metaSheetDAO.deployed();
-    expect(metaSheetDAOInstant).not.equals(undefined);
+    theMetaSheetInstant = await theMetaSheet.deployed();
+    expect(theMetaSheetInstant).not.equals(undefined);
   });
 });
 
-describe("Setup MetaSheetDAO", function () {
-  it("transfer ownership of Token, NFT and DAOEngine to MetaSheetDAO", async function () {
-    await tokenInstant.transferOwnership(metaSheetDAOInstant.address);
-    await nftInstant.transferOwnership(metaSheetDAOInstant.address);
-    await daoEngineInstant.transferOwnership(metaSheetDAOInstant.address);
-    await governanceInstant.transferOwnership(metaSheetDAOInstant.address);
+describe("Setup TheMetaSheet", function () {
+  it("transfer ownership of Token, NFT and DAOEngine to TheMetaSheet", async function () {
+    await tokenInstant.transferOwnership(theMetaSheetInstant.address);
+    await nftInstant.transferOwnership(theMetaSheetInstant.address);
+    await daoEngineInstant.transferOwnership(theMetaSheetInstant.address);
+    await governanceInstant.transferOwnership(theMetaSheetInstant.address);
   });
 
   it("should acquire DAOEngine via proposal", async function () {
     const proposalId = await governanceInstant.proposalCount();
-    await metaSheetDAOInstant.createDAOEngineProposal(
+    await theMetaSheetInstant.createDAOEngineProposal(
       "first daoEngine Setup proposal",
       daoEngineInstant.address
     );
-    await metaSheetDAOInstant.vote(proposalId, true);
-    await metaSheetDAOInstant.setDAOEngine(proposalId);
+    await theMetaSheetInstant.vote(proposalId, true);
+    await theMetaSheetInstant.setDAOEngine(proposalId);
   });
 
   it("should failed to acquire DAOEngine via same proposal", async function () {
     const proposalId = (await governanceInstant.proposalCount()).toNumber() - 1;
-    return expect(metaSheetDAOInstant.setDAOEngine(proposalId)).to.eventually
+    return expect(theMetaSheetInstant.setDAOEngine(proposalId)).to.eventually
       .rejected;
   });
 
   it("validate acquired DAOEngine address", async function () {
     return expect(
-      metaSheetDAOInstant.getDAOEngineAddress()
+      theMetaSheetInstant.getDAOEngineAddress()
     ).to.eventually.become(daoEngineInstant.address);
   });
 
   it("should failed to validate acquired DAOEngine address with DAOEngineTwo", async function () {
     return expect(
-      metaSheetDAOInstant.getDAOEngineAddress()
+      theMetaSheetInstant.getDAOEngineAddress()
     ).to.eventually.not.become(daoEngineTwoInstant.address);
   });
 });

@@ -2,7 +2,7 @@ pragma solidity ^0.8.0;
 
 import "./interfaces/TokenInterface.sol";
 import "./interfaces/NFTInterface.sol";
-import "./interfaces/MetaSheetDAO.sol";
+import "./interfaces/TheMetaSheet.sol";
 import "./interfaces/DAOEngine.sol";
 
 import "@openzeppelin/contracts/access/Ownable.sol";
@@ -10,7 +10,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 contract DAOEngine is Ownable {
     TokenInterface public token;
     NFTInterface public nft;
-    MetaSheetDAOInterface public metaSheetDAO;
+    TheMetaSheetInterface public TheMetaSheet;
     bool public locked = false;
 
     modifier notLocked() {
@@ -22,17 +22,17 @@ contract DAOEngine is Ownable {
         locked = true;
     }
 
-    function acquire(address _metaSheetDAO) public virtual onlyOwner notLocked {
+    function acquire(address _TheMetaSheet) public virtual onlyOwner notLocked {
         require(
-            address(metaSheetDAO) == address(0),
+            address(TheMetaSheet) == address(0),
             "DAOEngine: Engine is already acquired"
         );
         require(
-            address(_metaSheetDAO) != address(0),
+            address(_TheMetaSheet) != address(0),
             "DAOEngine: invalid address"
         );
-        metaSheetDAO = MetaSheetDAOInterface(_metaSheetDAO);
-        token = TokenInterface(metaSheetDAO.token());
-        nft = NFTInterface(metaSheetDAO.nft());
+        TheMetaSheet = TheMetaSheetInterface(_TheMetaSheet);
+        token = TokenInterface(TheMetaSheet.token());
+        nft = NFTInterface(TheMetaSheet.nft());
     }
 }

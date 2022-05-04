@@ -7,7 +7,7 @@ import "./interfaces/Governance.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 
-contract MetaSheetDAO is Ownable {
+contract TheMetaSheet is Ownable {
     TokenInterface public token;
     NFTInterface public nft;
     GovernanceInterface public governance;
