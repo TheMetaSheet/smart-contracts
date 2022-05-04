@@ -45,24 +45,32 @@ describe("Deploy NFT", function () {
     });
     tx.wait();
 
-    const balanceOfAdmin = await userNftInstant.balanceOf(user.address);
-    expect(balanceOfAdmin).equals(mintCount);
+    const balanceOfNFT = await userNftInstant.balanceOf(user.address);
+    expect(balanceOfNFT).equals(mintCount);
 
     const balance = await waffle.provider.getBalance(nftInstant.address);
     const calculatedBalance = new BigNumberJs(balanceBefore.toString())
       .plus(totalCost.toString())
-      .toString();
+      .toFixed();
     expect(balance.toString()).equals(calculatedBalance);
   });
 
-  it("should fail to mint NFT on less price", async function () {
-    const [, user] = await ethers.getSigners();
-    const userNftInstant = nftInstant.connect(user);
-    const mintCount = 10;
-    return expect(
-      userNftInstant.mint(mintCount, {
-        value: ethers.utils.parseEther("1.0"),
-      })
-    ).to.eventually.rejected;
+  it("withdraw collected eth from minted NFT to admin", async function () {
+    const [admin] = await ethers.getSigners();
+
+    const balanceOfAdminBefore = await admin.getBalance();
+    await (await nftInstant.withdraw()).wait();
+
+    const balanceOfAdminAfter = await admin.getBalance();
+    const balanceOfNFTAfter = await waffle.provider.getBalance(
+      nftInstant.address
+    );
+    expect(balanceOfNFTAfter.toString()).to.equals("0");
+
+    expect(
+      new BigNumberJs(balanceOfAdminAfter.toString()).isGreaterThan(
+        balanceOfAdminBefore.toString()
+      )
+    ).to.equals(true);
   });
 });
