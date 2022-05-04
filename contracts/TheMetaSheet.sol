@@ -49,6 +49,7 @@ contract TheMetaSheet is Ownable {
     }
 
     function setDAOEngine(uint256 proposalId) public {
+        governance.setProposalExecuted(proposalId);
         bytes memory params = governance.getProposalParams(proposalId);
         address daoEngineAddress = abi.decode(params, (address));
         require(daoEngineAddress != address(0), "invalid address");
@@ -64,7 +65,6 @@ contract TheMetaSheet is Ownable {
         DAOEngineInterface daoEngine = DAOEngineInterface(daoEngineAddress);
         daoEngine.acquire(address(this));
         daoEngines.push(daoEngine);
-        governance.setProposalExecuted(proposalId);
     }
 
     function getNFTAddress() public view returns (address) {

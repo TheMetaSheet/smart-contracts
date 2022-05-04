@@ -22,7 +22,7 @@ contract Governance is Ownable {
         bytes params;
         uint256 livePeriod;
         uint256 proposalId;
-        bool executed;
+        bool isExecuted;
         uint256 voteCount;
         uint256 votesFor;
         uint256 votesAgainst;
@@ -53,7 +53,7 @@ contract Governance is Ownable {
     modifier onlyValidDAOEngineProposal(uint256 proposalId) {
         Proposal storage proposal = proposals[proposalId];
         require(proposal.proposalId == proposalId, "invalid proposal id");
-        require(proposal.executed == false, "proposal is already executed");
+        require(proposal.isExecuted == false, "proposal is already executed");
         require(
             proposal.livePeriod < block.timestamp || true,
             "there still have time before executed"
@@ -68,7 +68,7 @@ contract Governance is Ownable {
         Proposal storage proposal = proposals[proposalCount];
         proposal.description = _description;
         proposal.params = _params;
-        proposal.executed = false;
+        proposal.isExecuted = false;
         proposal.livePeriod = block.timestamp + 1 weeks;
         proposal.proposalId = proposalCount;
         proposalCount = proposalCount + 1;
@@ -87,6 +87,14 @@ contract Governance is Ownable {
             proposals[proposalId].proposalId == proposalId && proposalId != 0,
             "invalid proposal id"
         );
-        proposals[proposalId].executed = true;
+        require(
+            proposals[proposalId].isExecuted == false,
+            "proposal is already executed"
+        );
+        require(
+            proposals[proposalId].votingPassed == false,
+            "proposal voting is not passed"
+        );
+        proposals[proposalId].isExecuted = true;
     }
 }
