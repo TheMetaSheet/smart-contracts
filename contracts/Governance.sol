@@ -23,12 +23,31 @@ contract Governance is Ownable {
         uint256 livePeriod;
         uint256 proposalId;
         bool executed;
+        uint256 voteCount;
+        uint256 votesFor;
+        uint256 votesAgainst;
+        mapping(uint256 => address) addresses;
         mapping(address => bool) votes;
+        bool votingPassed;
+        bool isVotingCounted;
     }
 
     function vote(uint256 proposalId, bool supportProposal) public onlyOwner {
         Proposal storage proposal = proposals[proposalId];
         proposal.votes[msg.sender] = supportProposal;
+        proposal.addresses[proposal.voteCount] = msg.sender;
+        proposal.voteCount++;
+    }
+
+    function countVote(uint256 proposalId) public onlyOwner {
+        Proposal storage proposal = proposals[proposalId];
+        require(!proposal.isVotingCounted, "voting is already counted");
+        for (uint256 j = 0; j < proposal.voteCount; j++) {
+            if (proposal.votes[proposal.addresses[j]]) proposal.votesFor++;
+            else proposal.votesAgainst++;
+        }
+        proposal.votingPassed = proposal.votesFor > proposal.votesAgainst;
+        proposal.isVotingCounted = true;
     }
 
     modifier onlyValidDAOEngineProposal(uint256 proposalId) {
