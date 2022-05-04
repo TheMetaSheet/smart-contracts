@@ -2,6 +2,7 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "hardhat/console.sol";
 
 contract NFT is ERC721Enumerable, Ownable {
     using Strings for uint256;
@@ -35,7 +36,10 @@ contract NFT is ERC721Enumerable, Ownable {
         require(supply + _mintAmount <= maxSupply);
 
         if (msg.sender != owner()) {
-            require(msg.value >= cost * _mintAmount);
+            require(
+                msg.value >= cost * _mintAmount,
+                "required more eth to mint"
+            );
         }
 
         for (uint256 i = 1; i <= _mintAmount; i++) {
