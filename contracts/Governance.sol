@@ -26,10 +26,10 @@ contract Governance is Ownable {
         uint256 voteCount;
         uint256 votesFor;
         uint256 votesAgainst;
-        mapping(uint256 => address) addresses;
-        mapping(address => bool) votes;
         bool votingPassed;
         bool isVotingCounted;
+        mapping(uint256 => address) addresses;
+        mapping(address => bool) votes;
     }
 
     function vote(uint256 proposalId, bool supportProposal) public onlyOwner {
@@ -48,17 +48,6 @@ contract Governance is Ownable {
         }
         proposal.votingPassed = proposal.votesFor > proposal.votesAgainst;
         proposal.isVotingCounted = true;
-    }
-
-    modifier onlyValidDAOEngineProposal(uint256 proposalId) {
-        Proposal storage proposal = proposals[proposalId];
-        require(proposal.proposalId == proposalId, "invalid proposal id");
-        require(proposal.isExecuted == false, "proposal is already executed");
-        require(
-            proposal.livePeriod < block.timestamp || true,
-            "there still have time before executed"
-        );
-        _;
     }
 
     function createProposal(string memory _description, bytes memory _params)
