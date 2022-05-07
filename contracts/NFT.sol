@@ -27,10 +27,19 @@ contract NFT is ERC721Enumerable, Ownable {
         return baseURI;
     }
 
+    function colNameToNumber(string memory col) public pure returns (uint256) {
+        bytes memory letters = bytes(col);
+        uint256 n = 0;
+        for (uint256 p = 0; p < letters.length; p++) {
+            n = uint8(letters[p]) - 64 + n * 26;
+        }
+        return n;
+    }
+
     function numberToColName(uint256 col) public pure returns (string memory) {
-        uint8 ordA = uint8(bytes("A")[0]);
-        uint8 ordZ = uint8(bytes("Z")[0]);
-        uint8 len = ordZ - ordA + 1;
+        uint8 A = uint8(bytes("A")[0]);
+        uint8 Z = uint8(bytes("Z")[0]);
+        uint8 len = Z - A + 1;
 
         uint256 num = 26;
         uint256 count = 1;
@@ -41,12 +50,10 @@ contract NFT is ERC721Enumerable, Ownable {
         }
 
         num = col;
-        string[] memory chars = new string[](count);
+        bytes memory str = new bytes(count);
         count = 0;
         while (num >= 0) {
-            chars[chars.length - 1 - count] = string(
-                abi.encodePacked(uint256((num % len)) + ordA)
-            );
+            str[str.length - 1 - count] = bytes1(uint8((num % len)) + A);
             if (num / len <= 0) {
                 break;
             }
@@ -55,10 +62,6 @@ contract NFT is ERC721Enumerable, Ownable {
             count++;
         }
 
-        bytes memory str;
-        for (uint256 i = 0; i < chars.length; i++) {
-            str = abi.encodePacked(str, chars[i]);
-        }
         return string(str);
     }
 
