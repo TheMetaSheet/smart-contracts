@@ -2,6 +2,7 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
 
 contract NFT is ERC721Enumerable, Ownable {
     using Strings for uint256;
@@ -9,11 +10,9 @@ contract NFT is ERC721Enumerable, Ownable {
     string baseURI;
     string public baseExtension = ".json";
     uint256 public cost = 0.05 ether;
-    uint256 public maxSupply = 10000;
-    uint256 public maxMintAmount = 20;
-    bool public paused = false;
-    bool public revealed = false;
     string public notRevealedUri;
+    uint256 maxCol = 100;
+    uint256 maxRow = 100;
 
     constructor(
         string memory _name,
@@ -30,13 +29,20 @@ contract NFT is ERC721Enumerable, Ownable {
     function colNameToNumber(string memory col) public pure returns (uint256) {
         bytes memory letters = bytes(col);
         uint256 n = 0;
+        uint8 A = uint8(bytes("A")[0]);
+        uint8 Z = uint8(bytes("Z")[0]);
         for (uint256 p = 0; p < letters.length; p++) {
-            n = uint8(letters[p]) - 64 + n * 26;
+            uint8 charCode = uint8(letters[p]);
+            if ((charCode > A - 1 && charCode < Z + 1) == false) {
+                return 0;
+            }
+            n = charCode - 64 + n * 26;
         }
         return n;
     }
 
-    function numberToColName(uint256 col) public pure returns (string memory) {
+    function numberToColName(uint256 _col) public pure returns (string memory) {
+        uint256 col = _col - 1;
         uint8 A = uint8(bytes("A")[0]);
         uint8 Z = uint8(bytes("Z")[0]);
         uint8 len = Z - A + 1;
@@ -65,23 +71,71 @@ contract NFT is ERC721Enumerable, Ownable {
         return string(str);
     }
 
-    function mint(uint256 _mintAmount) public payable {
+    function mint(uint256 colNumber, uint256 rowNumber) private {
         uint256 supply = totalSupply();
-        require(!paused);
-        require(_mintAmount > 0);
-        require(_mintAmount <= maxMintAmount);
-        require(supply + _mintAmount <= maxSupply);
+        _safeMint(msg.sender, supply + 1);
+    }
 
-        if (msg.sender != owner()) {
-            require(
-                msg.value >= cost * _mintAmount,
-                "required more eth to mint"
-            );
-        }
+    function mintByColumnNumberAndRowNumber(
+        uint256 columnNumber,
+        uint256 rowNumber
+    ) public payable {
+        require(
+            columnNumber > 0,
+            "invalid column number. it shoulbe greater than zero"
+        );
+        require(
+            rowNumber > 0,
+            "invalid row number. it shoulbe greater than zero"
+        );
+        require(
+            columnNumber <= maxCol,
+            string(
+                abi.encodePacked(
+                    "overflow max column. it can be maximum up to",
+                    Strings.toString(maxCol)
+                )
+            )
+        );
+        require(
+            rowNumber <= maxRow,
+            string(
+                abi.encodePacked(
+                    "overflow max row. it can be maximum up to",
+                    Strings.toString(maxRow)
+                )
+            )
+        );
+        if (msg.sender != owner())
+            require(msg.value >= cost, "required more eth to mint");
+        mint(columnNumber, rowNumber);
+    }
 
-        for (uint256 i = 1; i <= _mintAmount; i++) {
-            _safeMint(msg.sender, supply + i);
-        }
+    function mintByColumnNameAndRowNumber(
+        string memory columnName,
+        uint256 rowNumber
+    ) public payable {
+        uint256 columnNumber = colNameToNumber(columnName);
+        require(columnNumber > 0, "invalid column number");
+        require(
+            columnNumber <= maxCol,
+            string(
+                abi.encodePacked(
+                    "overflow max column. it can be maximum ",
+                    numberToColName(maxCol),
+                    "(",
+                    Strings.toString(maxCol),
+                    ")"
+                )
+            )
+        );
+        require(
+            rowNumber > 0,
+            "invalid row number. it shoulbe greater than zero"
+        );
+        if (msg.sender != owner())
+            require(msg.value >= cost, "required more eth to mint");
+        mint(columnNumber, rowNumber);
     }
 
     function walletOfOwner(address _owner)
@@ -109,10 +163,6 @@ contract NFT is ERC721Enumerable, Ownable {
             "ERC721Metadata: URI query for nonexistent token"
         );
 
-        if (revealed == false) {
-            return notRevealedUri;
-        }
-
         string memory currentBaseURI = _baseURI();
         return
             bytes(currentBaseURI).length > 0
@@ -126,16 +176,18 @@ contract NFT is ERC721Enumerable, Ownable {
                 : "";
     }
 
-    function reveal() public onlyOwner {
-        revealed = true;
-    }
-
     function setCost(uint256 _newCost) public onlyOwner {
         cost = _newCost;
     }
 
-    function setmaxMintAmount(uint256 _newmaxMintAmount) public onlyOwner {
-        maxMintAmount = _newmaxMintAmount;
+    function setMaxColAndRow(uint256 _maxCol, uint256 _maxRow)
+        public
+        onlyOwner
+    {
+        require(_maxCol > maxCol);
+        require(_maxRow > maxRow);
+        maxCol = _maxCol;
+        maxRow = _maxRow;
     }
 
     function setBaseURI(string memory _newBaseURI) public onlyOwner {
@@ -147,10 +199,6 @@ contract NFT is ERC721Enumerable, Ownable {
         onlyOwner
     {
         baseExtension = _newBaseExtension;
-    }
-
-    function pause(bool _state) public onlyOwner {
-        paused = _state;
     }
 
     function withdraw() public payable onlyOwner {
