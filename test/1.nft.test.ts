@@ -17,6 +17,7 @@ const print = (...args: any[]) => {
 };
 
 function numberToColName(n: number) {
+  n -= 1;
   const ordA = "a".charCodeAt(0);
   const ordZ = "z".charCodeAt(0);
   const len = ordZ - ordA + 1;
@@ -72,10 +73,12 @@ describe("Deploy NFT", function () {
       const balanceBefore = await waffle.provider.getBalance(
         nftInstant.address
       );
-      const tx = await userNftInstant.mint(mintCount, {
-        value: totalCostEth,
-      });
-      tx.wait();
+      for (let index = 0; index < mintCount; index++) {
+        const tx = await userNftInstant.mintByColumnNameAndRowNumber("AA", 1, {
+          value: utils.parseEther(`10.0`),
+        });
+        tx.wait();
+      }
 
       const balanceOfNFT = await userNftInstant.balanceOf(user.address);
       expect(balanceOfNFT).equals(mintCount);
@@ -128,7 +131,7 @@ describe("Deploy NFT", function () {
   context("✦ number to column letters", async function () {
     it("done", async function () {
       const list = [];
-      for (let i = 0; i < 100; i++) {
+      for (let i = 1; i < 101; i++) {
         const solidityValue = await nftInstant.numberToColName(i);
         const jsValue = numberToColName(i).toUpperCase();
         expect(`${solidityValue}`).to.equals(jsValue);
@@ -141,13 +144,13 @@ describe("Deploy NFT", function () {
   context("✦ column letters to number", async function () {
     it("done", async function () {
       const list = [];
-      for (let i = 0; i < 100; i++) {
+      for (let i = 1; i < 101; i++) {
         const solidityValue = (
-          await nftInstant.colNameToNumber(numberToColName(i))
+          await nftInstant.colNameToNumber(numberToColName(i).toUpperCase())
         ).toNumber();
-        const jsValue = colNameToNumber(numberToColName(i));
+        const jsValue = colNameToNumber(numberToColName(i).toUpperCase());
         expect(solidityValue).to.equals(jsValue);
-        list.push(`${i} = ${solidityValue}`);
+        list.push(`${numberToColName(i).toUpperCase()} = ${solidityValue}`);
       }
       print(`converted number from a - ${numberToColName(99)}:`, ...list);
     });
