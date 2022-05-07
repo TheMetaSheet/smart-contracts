@@ -21,7 +21,6 @@ function numberToColName(n: number) {
   const ordA = "a".charCodeAt(0);
   const ordZ = "z".charCodeAt(0);
   const len = ordZ - ordA + 1;
-
   let s = "";
   while (n >= 0) {
     s = String.fromCharCode((n % len) + ordA) + s;
@@ -38,6 +37,14 @@ function colNameToNumber(letters: string) {
   return n;
 }
 
+function getRandomInt(min: number, max: number) {
+  min = Math.ceil(min);
+  max = Math.floor(max);
+  return Math.floor(Math.random() * (max - min) + min);
+}
+
+const mintedIds: string[] = [];
+
 describe("Deploy NFT", function () {
   context("✦ Should deploy NFT", async function () {
     it("done", async function () {
@@ -49,6 +56,34 @@ describe("Deploy NFT", function () {
       );
       nftInstant = await nft.deployed();
       expect(nftInstant).not.equals(undefined);
+    });
+  });
+
+  context("✦ Number to column letters", async function () {
+    it("done", async function () {
+      const list = [];
+      for (let i = 1; i < 101; i++) {
+        const solidityValue = await nftInstant.numberToColName(i);
+        const jsValue = numberToColName(i).toUpperCase();
+        expect(`${solidityValue}`).to.equals(jsValue);
+        list.push(`${i} = ${solidityValue}`);
+      }
+      print("converted chars from 0 - 100:", ...list);
+    });
+  });
+
+  context("✦ Column letters to number", async function () {
+    it("done", async function () {
+      const list = [];
+      for (let i = 1; i < 101; i++) {
+        const solidityValue = (
+          await nftInstant.colNameToNumber(numberToColName(i).toUpperCase())
+        ).toNumber();
+        const jsValue = colNameToNumber(numberToColName(i).toUpperCase());
+        expect(solidityValue).to.equals(jsValue);
+        list.push(`${numberToColName(i).toUpperCase()} = ${solidityValue}`);
+      }
+      print(`converted number from a - ${numberToColName(99)}:`, ...list);
     });
   });
 
@@ -68,17 +103,32 @@ describe("Deploy NFT", function () {
       const mintCount = 10;
       const totalCost = 100;
       const totalCostEth = utils.parseEther(`${totalCost.toString()}.0`);
+
       print("mint count:", mintCount);
       print("total cost for:", totalCost, "eth");
+
       const balanceBefore = await waffle.provider.getBalance(
         nftInstant.address
       );
-      for (let index = 0; index < mintCount; index++) {
-        const tx = await userNftInstant.mintByColumnNameAndRowNumber("AA", 1, {
-          value: utils.parseEther(`10.0`),
-        });
+      for (let index = 1; index <= mintCount; index++) {
+        mintedIds[index - 1] = index.toString();
+        const columnName = numberToColName(getRandomInt(1, 100)).toUpperCase();
+        const rowNumber = getRandomInt(1, 100);
+        print("cell", `${columnName}${rowNumber}`);
+        const tx = await userNftInstant.mintByColumnNameAndRowNumber(
+          columnName,
+          rowNumber,
+          {
+            value: utils.parseEther(`10.0`),
+          }
+        );
         tx.wait();
       }
+
+      print(
+        "wallet",
+        (await userNftInstant.walletOfOwner(user.address)).join(",")
+      );
 
       const balanceOfNFT = await userNftInstant.balanceOf(user.address);
       expect(balanceOfNFT).equals(mintCount);
@@ -90,6 +140,35 @@ describe("Deploy NFT", function () {
       expect(balance.toString()).equals(calculatedBalance);
 
       print("calculatedBalance:", utils.formatEther(calculatedBalance), "eth");
+    });
+  });
+
+  context("✦ Transfer NFTs to another user", async function () {
+    it("done", async function () {
+      const [, user, anotherUser] = await ethers.getSigners();
+
+      const userNftInstant = nftInstant.connect(user);
+      print(
+        "user NFTs before: ",
+        (await userNftInstant.walletOfOwner(user.address)).join(", ")
+      );
+      for (let index = 1; index <= mintedIds.length - 5; index++) {
+        await userNftInstant.transferFrom(
+          user.address,
+          anotherUser.address,
+          mintedIds[index]
+        );
+      }
+
+      print(
+        "user NFTs after: ",
+        (await userNftInstant.walletOfOwner(user.address)).join(", ")
+      );
+
+      print(
+        "another user NFTs: ",
+        (await nftInstant.walletOfOwner(anotherUser.address)).join(", ")
+      );
     });
   });
 
@@ -127,32 +206,4 @@ describe("Deploy NFT", function () {
       });
     }
   );
-
-  context("✦ number to column letters", async function () {
-    it("done", async function () {
-      const list = [];
-      for (let i = 1; i < 101; i++) {
-        const solidityValue = await nftInstant.numberToColName(i);
-        const jsValue = numberToColName(i).toUpperCase();
-        expect(`${solidityValue}`).to.equals(jsValue);
-        list.push(`${i} = ${solidityValue}`);
-      }
-      print("converted chars from 0 - 100:", ...list);
-    });
-  });
-
-  context("✦ column letters to number", async function () {
-    it("done", async function () {
-      const list = [];
-      for (let i = 1; i < 101; i++) {
-        const solidityValue = (
-          await nftInstant.colNameToNumber(numberToColName(i).toUpperCase())
-        ).toNumber();
-        const jsValue = colNameToNumber(numberToColName(i).toUpperCase());
-        expect(solidityValue).to.equals(jsValue);
-        list.push(`${numberToColName(i).toUpperCase()} = ${solidityValue}`);
-      }
-      print(`converted number from a - ${numberToColName(99)}:`, ...list);
-    });
-  });
 });
