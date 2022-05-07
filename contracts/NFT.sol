@@ -2,7 +2,6 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "hardhat/console.sol";
 
 contract NFT is ERC721Enumerable, Ownable {
     using Strings for uint256;
@@ -26,6 +25,41 @@ contract NFT is ERC721Enumerable, Ownable {
 
     function _baseURI() internal view virtual override returns (string memory) {
         return baseURI;
+    }
+
+    function numberToColName(uint256 col) public pure returns (string memory) {
+        uint8 ordA = uint8(bytes("A")[0]);
+        uint8 ordZ = uint8(bytes("Z")[0]);
+        uint8 len = ordZ - ordA + 1;
+
+        uint256 num = 26;
+        uint256 count = 1;
+
+        while (num <= col) {
+            num = num * 26;
+            count++;
+        }
+
+        num = col;
+        string[] memory chars = new string[](count);
+        count = 0;
+        while (num >= 0) {
+            chars[chars.length - 1 - count] = string(
+                abi.encodePacked(uint256((num % len)) + ordA)
+            );
+            if (num / len <= 0) {
+                break;
+            }
+            num = uint256(num / len);
+            num = num - 1;
+            count++;
+        }
+
+        bytes memory str;
+        for (uint256 i = 0; i < chars.length; i++) {
+            str = abi.encodePacked(str, chars[i]);
+        }
+        return string(str);
     }
 
     function mint(uint256 _mintAmount) public payable {

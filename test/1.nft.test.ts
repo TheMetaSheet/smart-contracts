@@ -37,11 +37,11 @@ describe("Deploy NFT", function () {
       expect(cost).equals(initCost);
     });
   });
+
   context("✦ Mint NFT", async function () {
     it("done", async function () {
       const [, user] = await ethers.getSigners();
       const userNftInstant = nftInstant.connect(user);
-
       const mintCount = 10;
       const totalCost = 100;
       const totalCostEth = utils.parseEther(`${totalCost.toString()}.0`);
@@ -102,4 +102,14 @@ describe("Deploy NFT", function () {
       });
     }
   );
+
+  context("✦ number to column name", async function () {
+    it("done", async function () {
+      const list = [];
+      for (let i = 0; i < 100; i++) {
+        list.push(`${i} = ${await nftInstant.numberToColName(i)}`);
+      }
+      print("converted chars from 0 - 100:", ...list);
+    });
+  });
 });
