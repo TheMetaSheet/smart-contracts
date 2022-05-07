@@ -11,9 +11,31 @@ require("@nomiclabs/hardhat-waffle");
 chai.use(chaiAsPromised);
 const { expect } = chai;
 let nftInstant: NFT = undefined as any;
+
 const print = (...args: any[]) => {
   console.log("      ", ...args);
 };
+
+function numberToColName(n: number) {
+  const ordA = "a".charCodeAt(0);
+  const ordZ = "z".charCodeAt(0);
+  const len = ordZ - ordA + 1;
+
+  let s = "";
+  while (n >= 0) {
+    s = String.fromCharCode((n % len) + ordA) + s;
+    n = Math.floor(n / len) - 1;
+  }
+  return s;
+}
+
+function colNameToNumber(letters: string) {
+  let n = 0;
+  for (let p = 0; p < letters.length; p++) {
+    n = letters[p].charCodeAt(0) - 64 + n * 26;
+  }
+  return n;
+}
 
 describe("Deploy NFT", function () {
   context("✦ Should deploy NFT", async function () {
@@ -103,13 +125,31 @@ describe("Deploy NFT", function () {
     }
   );
 
-  context("✦ number to column name", async function () {
+  context("✦ number to column letters", async function () {
     it("done", async function () {
       const list = [];
       for (let i = 0; i < 100; i++) {
-        list.push(`${i} = ${await nftInstant.numberToColName(i)}`);
+        const solidityValue = await nftInstant.numberToColName(i);
+        const jsValue = numberToColName(i).toUpperCase();
+        expect(`${solidityValue}`).to.equals(jsValue);
+        list.push(`${i} = ${solidityValue}`);
       }
       print("converted chars from 0 - 100:", ...list);
+    });
+  });
+
+  context("✦ column letters to number", async function () {
+    it("done", async function () {
+      const list = [];
+      for (let i = 0; i < 100; i++) {
+        const solidityValue = (
+          await nftInstant.colNameToNumber(numberToColName(i))
+        ).toNumber();
+        const jsValue = colNameToNumber(numberToColName(i));
+        expect(solidityValue).to.equals(jsValue);
+        list.push(`${i} = ${solidityValue}`);
+      }
+      print(`converted number from a - ${numberToColName(99)}:`, ...list);
     });
   });
 });
