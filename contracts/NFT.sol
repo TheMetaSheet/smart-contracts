@@ -6,13 +6,20 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 
 contract NFT is ERC721Enumerable, Ownable {
     using Strings for uint256;
-
-    string baseURI;
+    string public baseURI;
     string public baseExtension = ".json";
     uint256 public cost = 0.05 ether;
     string public notRevealedUri;
-    uint256 maxCol = 100;
-    uint256 maxRow = 100;
+    uint256 public maxCol = 100;
+    uint256 public maxRow = 100;
+
+    struct Cell {
+        string columnName;
+        uint256 rowNumber;
+    }
+
+    mapping(string => bool) mintedCell;
+    mapping(uint256 => Cell) cells;
 
     constructor(
         string memory _name,
@@ -71,9 +78,24 @@ contract NFT is ERC721Enumerable, Ownable {
         return string(str);
     }
 
-    function mint(uint256 colNumber, uint256 rowNumber) private {
+    function mintCell(string memory columnName, uint256 rowNumber) private {
+        string memory cellName = string(
+            abi.encodePacked(columnName, Strings.toString(rowNumber))
+        );
+        require(mintedCell[cellName] == false, "this cell is already minted");
+        mintedCell[columnName] = true;
         uint256 supply = totalSupply();
-        _safeMint(msg.sender, supply + 1);
+        uint256 mintId = supply + 1;
+        cells[mintId] = Cell(columnName, rowNumber);
+        _safeMint(
+            msg.sender,
+            mintId,
+            abi.encodePacked(
+                columnName,
+                Strings.toString(rowNumber),
+                Strings.toString(supply)
+            )
+        );
     }
 
     function mintByColumnNumberAndRowNumber(
@@ -108,7 +130,7 @@ contract NFT is ERC721Enumerable, Ownable {
         );
         if (msg.sender != owner())
             require(msg.value >= cost, "required more eth to mint");
-        mint(columnNumber, rowNumber);
+        mintCell(numberToColName(columnNumber), rowNumber);
     }
 
     function mintByColumnNameAndRowNumber(
@@ -135,18 +157,24 @@ contract NFT is ERC721Enumerable, Ownable {
         );
         if (msg.sender != owner())
             require(msg.value >= cost, "required more eth to mint");
-        mint(columnNumber, rowNumber);
+        mintCell(columnName, rowNumber);
     }
 
     function walletOfOwner(address _owner)
         public
         view
-        returns (uint256[] memory)
+        returns (string[] memory)
     {
         uint256 ownerTokenCount = balanceOf(_owner);
-        uint256[] memory tokenIds = new uint256[](ownerTokenCount);
+        string[] memory tokenIds = new string[](ownerTokenCount);
         for (uint256 i; i < ownerTokenCount; i++) {
-            tokenIds[i] = tokenOfOwnerByIndex(_owner, i);
+            Cell memory cell = cells[tokenOfOwnerByIndex(_owner, i)];
+            tokenIds[i] = string(
+                abi.encodePacked(
+                    cell.columnName,
+                    Strings.toString(cell.rowNumber)
+                )
+            );
         }
         return tokenIds;
     }
