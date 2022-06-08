@@ -15,20 +15,7 @@ contract NFT is ERC721URIStorage {
 
     }
 
-    // A 1 = A1 
     function mint(string memory col, uint256 row) public returns (uint256){
-        bytes memory colBytes = bytes(col);
-        uint256 colLength = colBytes.length;
-        // uint256[] memory numbers = new uint256[](colLength);
-
-        // for(uint256 i = 0; i < colLength; i++){
-        //     numbers[i] = uint8(colBytes[i]);
-        // }
-
-        uint256 index = 0;
-        for(uint256 i = 0; i < colLength; i++){
-            index = uint8(colBytes[i]) - 64 + 26 * index;
-        }
     }
 
     function excelLabelToIndex(string memory label) public view returns (uint256) {
@@ -37,10 +24,6 @@ contract NFT is ERC721URIStorage {
         uint256 index = 0;
 
         for(uint256 i = 0; i < colLength; i++){
-
-
-
-
             index = uint8(colBytes[i]) - 64 + 26 * index;
         }
         return index;
