@@ -7,7 +7,6 @@ import "./interfaces/NFTInterface.sol";
 
 contract TheMetaSheet {
     NFTInterface public nft;
-    
 
     constructor(address nftAddress) {
         require(nftAddress != address(0), "invalid NFT address");
