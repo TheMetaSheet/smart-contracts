@@ -14,10 +14,9 @@ contract NFT is ERC721Enumerable {
     mapping(string => mapping(uint256 => uint256) ) public nfts;
 
     constructor() ERC721("TheMetaSheet", "TMS") {
-        console.log("NTF constructor");
     }
 
-    function mint(string memory col, uint256 row) public returns (uint256) {
+    function mint(string memory col, uint256 row) public payable returns (uint256)  {
         uint256 colIndex = excelLabelToIndex(col);
         require(colIndex > 0 && colIndex <= maxRow, "Invalid col");
         require(row > 0 && row <= maxRow, "Invalid row");
