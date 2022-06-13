@@ -1,19 +1,22 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
+import { NFT, TheMetaSheet } from "../typechain";
 
 describe("TheMetaSheet", function () {
-  it("Should return the new greeting once it's changed", async function () {
+  let nft: NFT, theMetaSheet: TheMetaSheet;
+
+  this.beforeEach(async () => {
+    const NFT = await ethers.getContractFactory("NFT");
+    nft = await NFT.deploy();
+    await nft.deployed();
+
     const TheMetaSheet = await ethers.getContractFactory("TheMetaSheet");
-    const theMetaSheet = await TheMetaSheet.deploy("Hello, world!");
+    theMetaSheet = await TheMetaSheet.deploy(nft.address);
     await theMetaSheet.deployed();
+  });
 
-    expect(await theMetaSheet.greet()).to.equal("Hello, world!");
-
-    const setGreetingTx = await theMetaSheet.setGreeting("Hola, mundo!");
-
-    // wait until the transaction is mined
-    await setGreetingTx.wait();
-
-    expect(await theMetaSheet.greet()).to.equal("Hola, mundo!");
+  it("getNFTAddress: should have same NFT address", async function () {
+    const nftAddress = await theMetaSheet.getNFTAddress();
+    expect(nft.address).to.equal(nftAddress);
   });
 });

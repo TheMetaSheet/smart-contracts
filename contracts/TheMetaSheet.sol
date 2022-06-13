@@ -1,22 +1,20 @@
-//SPDX-License-Identifier: Unlicense
+//SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
 import "hardhat/console.sol";
 
+import "./interfaces/NFTInterface.sol";
+
 contract TheMetaSheet {
-    string private greeting;
+    NFTInterface public nft;
+    
 
-    constructor(string memory _greeting) {
-        console.log("Deploying a Greeter with greeting:", _greeting);
-        greeting = _greeting;
+    constructor(address nftAddress) {
+        require(nftAddress != address(0), "invalid NFT address");
+        nft = NFTInterface(nftAddress);
     }
-
-    function greet() public view returns (string memory) {
-        return greeting;
-    }
-
-    function setGreeting(string memory _greeting) public {
-        console.log("Changing greeting from '%s' to '%s'", greeting, _greeting);
-        greeting = _greeting;
+    
+    function getNFTAddress() public view returns (address) {
+        return address(nft);
     }
 }
