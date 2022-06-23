@@ -21,7 +21,10 @@ jobs:
     - name: Install
       run: |
         npm install
-        npm install -g nyc
+
+    - name: Typechain
+      run: |
+        npm run typechain
 
     - name: Test
       run: npm test
