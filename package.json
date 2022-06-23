@@ -1,7 +1,8 @@
 {
   "name": "hardhat-project",
   "scripts": {
-    "test": "hardhat test"
+    "test": "hardhat test",
+    "typechain": "hardhat typechain"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.6",
