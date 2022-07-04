@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 interface DAOEngineInterface {
     function transferOwnership(address newOwner) external;
 
-    function acquire(address _TheMetaSheet) external;
+    function acquire(address theMetaSheet) external;
 
     function lock() external;
 }
